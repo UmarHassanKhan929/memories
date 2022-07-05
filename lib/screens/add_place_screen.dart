@@ -3,6 +3,7 @@ import 'package:flutter/src/widgets/framework.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:memoryplaces/models/place.dart';
 import 'package:memoryplaces/providers/great_places.dart';
 import 'package:memoryplaces/widgets/location_input.dart';
 import 'package:path/path.dart' as path;
@@ -23,6 +24,8 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
   File? _storedImage;
   File? _pickedimage;
 
+  PlaceLocation? _pickedLocation;
+
   Future<void> _takePicture() async {
     final ImagePicker _imagePicker = ImagePicker();
     final imageFile =
@@ -42,10 +45,21 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
     _pickedimage = savedImage;
   }
 
+  void _selectPlace(double lat, double lng) {
+    _pickedLocation = PlaceLocation(latitude: lat, longitude: lng);
+
+    _pickedimage = null;
+    _storedImage = null;
+    _titleController.clear();
+    _descripController.clear();
+    setState(() {});
+  }
+
   void _savePlace() {
     if (_titleController.text.isEmpty ||
         _descripController.text.isEmpty ||
-        _storedImage == null) {
+        _storedImage == null ||
+        _pickedLocation == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Please enter a title or  description'),
@@ -56,7 +70,10 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
     }
 
     Provider.of<GreatPlaces>(context, listen: false).addPlace(
-        _titleController.text, _descripController.text, _pickedimage!);
+        _titleController.text,
+        _descripController.text,
+        _pickedimage!,
+        _pickedLocation!);
     Navigator.of(context).pop();
   }
 
@@ -95,7 +112,7 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
                                 ? Image.file(
                                     _storedImage!,
                                     fit: BoxFit.cover,
-                                    width: double.infinity,
+                                    // width: double.infinity,
                                   )
                                 : const Text("no img"),
                           ),
@@ -112,9 +129,13 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
                             ),
                           ),
                         ),
-                        const LocationInput(),
+                        // const LocationInput(),
                       ],
                     ),
+                    const SizedBox(
+                      height: 10,
+                    ),
+                    LocationInput(_selectPlace),
                     TextField(
                       decoration: const InputDecoration(
                         labelText: 'Title',
@@ -129,7 +150,7 @@ class _AddPlaceScreenState extends State<AddPlaceScreen> {
                         labelText: 'Description',
                       ),
                       controller: _descripController,
-                      maxLines: 8,
+                      maxLines: 3,
                     ),
                   ],
                 ),
